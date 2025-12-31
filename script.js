@@ -447,13 +447,111 @@ function cacheEls() {
     countdownEls.seconds = document.getElementById('seconds');
 }
 
+// Celebration state
+let isCelebrating = false;
+let celebrationInterval = null;
+
 function updateCountdown() {
     const diff = new Date('January 1, 2026 00:00:00').getTime() - Date.now();
-    if (diff < 0) {
-        if (countdownEls.container) countdownEls.container.innerHTML = '<h2 class="countdown-title">Happy New Year 2026!</h2>';
-        for (let i = 0; i < 8; i++) setTimeout(() => autoLaunch(), i * 150);
+
+    if (diff < 0 && !isCelebrating) {
+        // START CELEBRATION!
+        isCelebrating = true;
+
+        // Update container with celebration message
+        if (countdownEls.container) {
+            countdownEls.container.innerHTML = `
+                <div class="celebration-message">
+                    <h2 class="celebration-title">Happy New Year</h2>
+                    <h1 class="celebration-year">2026</h1>
+                    <p class="celebration-subtitle">Wishing you joy, peace, and prosperity!</p>
+                </div>
+            `;
+        }
+
+        // Add celebration styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .celebration-message {
+                text-align: center;
+                animation: celebrationPop 1s ease-out forwards;
+            }
+            @keyframes celebrationPop {
+                0% { transform: scale(0.5); opacity: 0; }
+                50% { transform: scale(1.1); }
+                100% { transform: scale(1); opacity: 1; }
+            }
+            .celebration-title {
+                font-family: 'Orbitron', sans-serif;
+                font-size: clamp(1.5rem, 5vw, 3rem);
+                font-weight: 400;
+                letter-spacing: 4px;
+                text-transform: uppercase;
+                color: #ffb7c5;
+                text-shadow: 0 0 30px rgba(255, 183, 197, 0.8);
+                margin-bottom: 10px;
+            }
+            .celebration-year {
+                font-family: 'Orbitron', sans-serif;
+                font-size: clamp(4rem, 15vw, 10rem);
+                font-weight: 900;
+                color: white;
+                text-shadow: 
+                    0 0 20px rgba(255, 183, 197, 0.8),
+                    0 0 40px rgba(255, 183, 197, 0.6),
+                    0 0 60px rgba(180, 215, 255, 0.4);
+                letter-spacing: 10px;
+                line-height: 1;
+                animation: yearPulse 2s ease-in-out infinite;
+            }
+            @keyframes yearPulse {
+                0%, 100% { text-shadow: 0 0 20px rgba(255, 183, 197, 0.8), 0 0 40px rgba(255, 183, 197, 0.6); }
+                50% { text-shadow: 0 0 30px rgba(180, 215, 255, 0.9), 0 0 60px rgba(180, 215, 255, 0.7); }
+            }
+            .celebration-subtitle {
+                font-size: clamp(0.9rem, 2.5vw, 1.3rem);
+                font-weight: 300;
+                letter-spacing: 3px;
+                color: #e6e6fa;
+                margin-top: 15px;
+                opacity: 0.9;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initial big burst - 15 fireworks
+        for (let i = 0; i < 15; i++) {
+            setTimeout(() => {
+                launch(random(canvasWidth * 0.1, canvasWidth * 0.9), random(canvasHeight * 0.1, canvasHeight * 0.4));
+            }, i * 100);
+        }
+
+        // Continuous celebration fireworks for 30 seconds
+        let celebrationCount = 0;
+        celebrationInterval = setInterval(() => {
+            celebrationCount++;
+
+            // Launch 2-4 fireworks every 400ms
+            const count = Math.floor(random(2, 5));
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    if (particles.length < CONFIG.maxParticles * 0.8) {
+                        launch(random(canvasWidth * 0.05, canvasWidth * 0.95), random(canvasHeight * 0.08, canvasHeight * 0.45));
+                    }
+                }, i * 80);
+            }
+
+            // Stop after 30 seconds (75 intervals at 400ms)
+            if (celebrationCount >= 75) {
+                clearInterval(celebrationInterval);
+            }
+        }, 400);
+
         return;
     }
+
+    if (isCelebrating) return; // Already celebrating, don't update countdown
+
     const d = (diff / 86400000) | 0;
     const h = ((diff % 86400000) / 3600000) | 0;
     const m = ((diff % 3600000) / 60000) | 0;
