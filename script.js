@@ -1,82 +1,62 @@
 /**
- * ==========================================
  * New Year 2026 - Fireworks Engine
- * Minimalist Anime Theme + Theme Switcher
- * Realistic Sound Effects & Full Interactivity
- * ==========================================
+ * Mobile-Optimized with Theme Switcher
  */
 
-// ==========================================
-// Canvas Setup
-// ==========================================
-
 const canvas = document.getElementById('fireworksCanvas');
-const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
+const ctx = canvas.getContext('2d', { alpha: true });
 
-// Theme Palettes
+// Themes
 const THEMES = {
     anime: {
         name: 'Anime',
         colors: ['#ffb7c5', '#ffd1dc', '#b4d7ff', '#ffd700', '#e6e6fa', '#98fb98', '#fffacd', '#ffcba4'],
         bgColor: 'rgba(15, 12, 41, 0.12)',
-        bgGradient: 'linear-gradient(180deg, #0f0c29 0%, #1a1a3e 25%, #24243e 50%, #302b63 75%, #0f0c29 100%)'
+        bg: 'linear-gradient(180deg, #0f0c29 0%, #1a1a3e 25%, #24243e 50%, #302b63 75%, #0f0c29 100%)'
     },
     cyberpunk: {
         name: 'Cyberpunk',
         colors: ['#ff00ff', '#00ffff', '#bf00ff', '#0080ff', '#ffff00', '#00ff88', '#ff0080', '#8080ff'],
         bgColor: 'rgba(5, 5, 16, 0.12)',
-        bgGradient: 'linear-gradient(180deg, #0a0020 0%, #150030 25%, #0a0a2a 50%, #050515 100%)'
+        bg: 'linear-gradient(180deg, #0a0020 0%, #150030 25%, #0a0a2a 50%, #050515 100%)'
     },
     warm: {
         name: 'Festival',
         colors: ['#ff6b35', '#f7c59f', '#efa00b', '#d62828', '#fcbf49', '#ff9770', '#ffd166', '#ff8fa3'],
         bgColor: 'rgba(20, 10, 5, 0.12)',
-        bgGradient: 'linear-gradient(180deg, #1a0a00 0%, #2d1810 25%, #1f1010 50%, #0f0505 100%)'
+        bg: 'linear-gradient(180deg, #1a0a00 0%, #2d1810 25%, #1f1010 50%, #0f0505 100%)'
     },
     nature: {
         name: 'Nature',
         colors: ['#a8dadc', '#457b9d', '#90be6d', '#f4a261', '#e9c46a', '#2a9d8f', '#b5e48c', '#76c893'],
         bgColor: 'rgba(10, 20, 15, 0.12)',
-        bgGradient: 'linear-gradient(180deg, #0a1510 0%, #102015 25%, #0f1a12 50%, #050a08 100%)'
+        bg: 'linear-gradient(180deg, #0a1510 0%, #102015 25%, #0f1a12 50%, #050a08 100%)'
     }
 };
 
 let currentTheme = 'anime';
-
-// Device detection
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
-const isLowEnd = isMobile || navigator.hardwareConcurrency <= 4;
 
-// More festive configuration!
 const CONFIG = {
-    particleCount: isLowEnd ? 35 : 55,      // MORE particles!
+    particleCount: isMobile ? 30 : 50,
     gravity: 0.04,
     friction: 0.975,
-    sparkleCount: isLowEnd ? 20 : 35,
-    autoFireworkInterval: isLowEnd ? 2500 : 1800,  // Faster auto-launch
-    maxFireworks: isLowEnd ? 4 : 6,          // More concurrent!
-    maxParticles: isLowEnd ? 200 : 350,      // More particles allowed
-    particleDecay: 0.018,
-    trailParticles: isLowEnd ? 2 : 4,        // Trail particles
+    sparkleCount: isMobile ? 15 : 30,
+    autoFireworkInterval: isMobile ? 2800 : 2000,
+    maxFireworks: isMobile ? 3 : 5,
+    maxParticles: isMobile ? 180 : 300,
+    particleDecay: 0.02,
 };
 
-// Arrays
 let fireworks = [];
 let particles = [];
 let sparkles = [];
-
-// State
 let animationId = null;
 let lastTime = 0;
-let frameCount = 0;
 let canvasWidth = 0;
 let canvasHeight = 0;
-let dpr = 1;
 
-// ==========================================
-// Realistic Sound System (Web Audio API)
-// ==========================================
-
+// Audio
 let audioCtx = null;
 let soundEnabled = true;
 let masterGain = null;
@@ -85,327 +65,162 @@ function initAudio() {
     try {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         masterGain = audioCtx.createGain();
-        masterGain.gain.value = 0.5;
+        masterGain.gain.value = 0.4;
         masterGain.connect(audioCtx.destination);
     } catch (e) {
-        console.log('Web Audio not supported');
         soundEnabled = false;
     }
 }
 
-// Realistic launch sound - whoosh/whistle rising
-function playLaunchSound() {
+function playLaunch() {
     if (!soundEnabled || !audioCtx) return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
-
     try {
         const now = audioCtx.currentTime;
-
-        // Whoosh noise
-        const noiseLength = 0.5;
-        const bufferSize = audioCtx.sampleRate * noiseLength;
-        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-
-        for (let i = 0; i < bufferSize; i++) {
-            const t = i / bufferSize;
+        const len = 0.4;
+        const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * len, audioCtx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < data.length; i++) {
+            const t = i / data.length;
             data[i] = (Math.random() * 2 - 1) * Math.pow(t, 0.5) * (1 - t);
         }
-
-        const noise = audioCtx.createBufferSource();
-        noise.buffer = buffer;
-
-        // Bandpass filter for whistle
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf;
         const filter = audioCtx.createBiquadFilter();
         filter.type = 'bandpass';
         filter.frequency.setValueAtTime(500, now);
-        filter.frequency.exponentialRampToValueAtTime(2000, now + 0.4);
-        filter.Q.value = 5;
-
+        filter.frequency.exponentialRampToValueAtTime(1800, now + 0.35);
+        filter.Q.value = 4;
         const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + noiseLength);
-
-        noise.connect(filter);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + len);
+        src.connect(filter);
         filter.connect(gain);
         gain.connect(masterGain);
-
-        noise.start(now);
-
-        // Add whistle tone
-        const osc = audioCtx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(400, now);
-        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.35);
-
-        const oscGain = audioCtx.createGain();
-        oscGain.gain.setValueAtTime(0.05, now);
-        oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-
-        osc.connect(oscGain);
-        oscGain.connect(masterGain);
-
-        osc.start(now);
-        osc.stop(now + 0.4);
+        src.start(now);
     } catch (e) { }
 }
 
-// Realistic explosion - layered boom + crackle
-function playExplosionSound() {
+function playBoom() {
     if (!soundEnabled || !audioCtx) return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
-
     try {
         const now = audioCtx.currentTime;
-
-        // 1. Deep boom
-        const boomLength = 0.4;
-        const boomBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * boomLength, audioCtx.sampleRate);
-        const boomData = boomBuffer.getChannelData(0);
-
+        // Boom
+        const boomLen = 0.35;
+        const boomBuf = audioCtx.createBuffer(1, audioCtx.sampleRate * boomLen, audioCtx.sampleRate);
+        const boomData = boomBuf.getChannelData(0);
         for (let i = 0; i < boomData.length; i++) {
-            const t = i / boomData.length;
-            boomData[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 1.5);
+            boomData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / boomData.length, 1.5);
         }
-
         const boom = audioCtx.createBufferSource();
-        boom.buffer = boomBuffer;
-
+        boom.buffer = boomBuf;
         const boomFilter = audioCtx.createBiquadFilter();
         boomFilter.type = 'lowpass';
-        boomFilter.frequency.value = 200;
-
+        boomFilter.frequency.value = 250;
         const boomGain = audioCtx.createGain();
-        boomGain.gain.setValueAtTime(0.4, now);
-        boomGain.gain.exponentialRampToValueAtTime(0.01, now + boomLength);
-
+        boomGain.gain.setValueAtTime(0.35, now);
+        boomGain.gain.exponentialRampToValueAtTime(0.01, now + boomLen);
         boom.connect(boomFilter);
         boomFilter.connect(boomGain);
         boomGain.connect(masterGain);
         boom.start(now);
-
-        // 2. Mid-range pop
-        const popLength = 0.25;
-        const popBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * popLength, audioCtx.sampleRate);
-        const popData = popBuffer.getChannelData(0);
-
-        for (let i = 0; i < popData.length; i++) {
-            const t = i / popData.length;
-            popData[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 2);
+        // Crackle
+        const crackLen = 0.5;
+        const crackBuf = audioCtx.createBuffer(1, audioCtx.sampleRate * crackLen, audioCtx.sampleRate);
+        const crackData = crackBuf.getChannelData(0);
+        for (let i = 0; i < crackData.length; i++) {
+            const t = i / crackData.length;
+            crackData[i] = Math.random() < 0.04 ? (Math.random() * 2 - 1) * (1 - t) * 0.4 : (Math.random() * 2 - 1) * 0.03 * (1 - t);
         }
-
-        const pop = audioCtx.createBufferSource();
-        pop.buffer = popBuffer;
-
-        const popFilter = audioCtx.createBiquadFilter();
-        popFilter.type = 'bandpass';
-        popFilter.frequency.value = 800;
-        popFilter.Q.value = 1;
-
-        const popGain = audioCtx.createGain();
-        popGain.gain.setValueAtTime(0.25, now);
-        popGain.gain.exponentialRampToValueAtTime(0.01, now + popLength);
-
-        pop.connect(popFilter);
-        popFilter.connect(popGain);
-        popGain.connect(masterGain);
-        pop.start(now);
-
-        // 3. High crackle
-        const crackleLength = 0.6;
-        const crackleBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * crackleLength, audioCtx.sampleRate);
-        const crackleData = crackleBuffer.getChannelData(0);
-
-        for (let i = 0; i < crackleData.length; i++) {
-            const t = i / crackleData.length;
-            // Sporadic crackles
-            if (Math.random() < 0.03) {
-                crackleData[i] = (Math.random() * 2 - 1) * (1 - t) * 0.5;
-            } else {
-                crackleData[i] = (Math.random() * 2 - 1) * 0.05 * (1 - t);
-            }
-        }
-
-        const crackle = audioCtx.createBufferSource();
-        crackle.buffer = crackleBuffer;
-
-        const crackleFilter = audioCtx.createBiquadFilter();
-        crackleFilter.type = 'highpass';
-        crackleFilter.frequency.value = 2000;
-
-        const crackleGain = audioCtx.createGain();
-        crackleGain.gain.setValueAtTime(0.2, now + 0.05);
-        crackleGain.gain.exponentialRampToValueAtTime(0.01, now + crackleLength);
-
-        crackle.connect(crackleFilter);
-        crackleFilter.connect(crackleGain);
-        crackleGain.connect(masterGain);
-        crackle.start(now + 0.03);
-
+        const crack = audioCtx.createBufferSource();
+        crack.buffer = crackBuf;
+        const crackFilter = audioCtx.createBiquadFilter();
+        crackFilter.type = 'highpass';
+        crackFilter.frequency.value = 1500;
+        const crackGain = audioCtx.createGain();
+        crackGain.gain.setValueAtTime(0.15, now + 0.03);
+        crackGain.gain.exponentialRampToValueAtTime(0.01, now + crackLen);
+        crack.connect(crackFilter);
+        crackFilter.connect(crackGain);
+        crackGain.connect(masterGain);
+        crack.start(now + 0.02);
     } catch (e) { }
 }
 
-// Sparkle sound - multiple tiny pops
-function playSparkleSound() {
-    if (!soundEnabled || !audioCtx) return;
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-
-    try {
-        const now = audioCtx.currentTime;
-
-        // Quick high-pitched ting
-        const osc = audioCtx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.value = 1500 + Math.random() * 1000;
-
-        const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0.04, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-
-        osc.connect(gain);
-        gain.connect(masterGain);
-
-        osc.start(now);
-        osc.stop(now + 0.1);
-    } catch (e) { }
-}
-
-// ==========================================
 // UI Controls
-// ==========================================
-
 function createControls() {
-    // Container
     const controls = document.createElement('div');
-    controls.style.cssText = `
-        position: fixed;
-        top: 15px;
-        right: 15px;
-        z-index: 100;
-        display: flex;
-        gap: 10px;
-    `;
+    controls.className = 'controls';
 
-    // Sound toggle
     const soundBtn = document.createElement('button');
     soundBtn.className = 'control-btn';
-    soundBtn.innerHTML = '🔊';
+    soundBtn.id = 'soundBtn';
+    soundBtn.innerHTML = 'S';
     soundBtn.setAttribute('aria-label', 'Toggle sound');
-    soundBtn.onclick = (e) => {
-        e.stopPropagation();
-        soundEnabled = !soundEnabled;
-        soundBtn.innerHTML = soundEnabled ? '🔊' : '🔇';
-        if (soundEnabled && !audioCtx) initAudio();
-    };
 
-    // Theme toggle
     const themeBtn = document.createElement('button');
     themeBtn.className = 'control-btn';
-    themeBtn.innerHTML = '🎨';
+    themeBtn.id = 'themeBtn';
+    themeBtn.innerHTML = 'T';
     themeBtn.setAttribute('aria-label', 'Change theme');
-    themeBtn.onclick = (e) => {
-        e.stopPropagation();
-        cycleTheme();
-    };
 
     controls.appendChild(soundBtn);
     controls.appendChild(themeBtn);
     document.body.appendChild(controls);
 
-    // Add styles
-    const style = document.createElement('style');
-    style.textContent = `
-        .control-btn {
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 50%;
-            width: 45px;
-            height: 45px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: transform 0.2s, background 0.2s;
-        }
-        .control-btn:hover {
-            transform: scale(1.1);
-            background: rgba(255,255,255,0.2);
-        }
-        .control-btn:active {
-            transform: scale(0.95);
-        }
-        .theme-toast {
-            position: fixed;
-            top: 70px;
-            right: 15px;
-            background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(10px);
-            padding: 10px 20px;
-            border-radius: 20px;
-            color: white;
-            font-size: 0.85rem;
-            z-index: 101;
-            animation: fadeInOut 2s ease forwards;
-        }
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateY(-10px); }
-            15% { opacity: 1; transform: translateY(0); }
-            85% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-    `;
-    document.head.appendChild(style);
+    // Use both click and touchend for mobile
+    function toggleSound(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        soundEnabled = !soundEnabled;
+        soundBtn.innerHTML = soundEnabled ? 'S' : 'X';
+        soundBtn.style.opacity = soundEnabled ? '1' : '0.5';
+        if (soundEnabled && !audioCtx) initAudio();
+    }
+
+    function toggleTheme(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const themes = Object.keys(THEMES);
+        const idx = themes.indexOf(currentTheme);
+        currentTheme = themes[(idx + 1) % themes.length];
+        document.body.style.background = THEMES[currentTheme].bg;
+        showToast('Theme: ' + THEMES[currentTheme].name);
+    }
+
+    soundBtn.addEventListener('click', toggleSound);
+    soundBtn.addEventListener('touchend', toggleSound);
+    themeBtn.addEventListener('click', toggleTheme);
+    themeBtn.addEventListener('touchend', toggleTheme);
 }
 
-function cycleTheme() {
-    const themes = Object.keys(THEMES);
-    const idx = themes.indexOf(currentTheme);
-    currentTheme = themes[(idx + 1) % themes.length];
-
-    // Apply background
-    document.body.style.background = THEMES[currentTheme].bgGradient;
-
-    // Show toast
+function showToast(msg) {
+    const existing = document.querySelector('.theme-toast');
+    if (existing) existing.remove();
     const toast = document.createElement('div');
     toast.className = 'theme-toast';
-    toast.textContent = `Theme: ${THEMES[currentTheme].name}`;
+    toast.textContent = msg;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 2000);
 }
 
-// ==========================================
-// Utility Functions
-// ==========================================
+// Utils
+const random = (a, b) => Math.random() * (b - a) + a;
+const getColor = () => THEMES[currentTheme].colors[Math.floor(Math.random() * THEMES[currentTheme].colors.length)];
 
-const random = (min, max) => Math.random() * (max - min) + min;
-const randomInt = (min, max) => (Math.random() * (max - min) + min) | 0;
-const getRandomColor = () => THEMES[currentTheme].colors[randomInt(0, THEMES[currentTheme].colors.length)];
-
-// Pre-compute all RGB values
 const RGB = {};
 Object.values(THEMES).forEach(t => {
     t.colors.forEach(hex => {
-        if (!RGB[hex]) {
-            RGB[hex] = {
-                r: parseInt(hex.slice(1, 3), 16),
-                g: parseInt(hex.slice(3, 5), 16),
-                b: parseInt(hex.slice(5, 7), 16)
-            };
-        }
+        if (!RGB[hex]) RGB[hex] = { r: parseInt(hex.slice(1, 3), 16), g: parseInt(hex.slice(3, 5), 16), b: parseInt(hex.slice(5, 7), 16) };
     });
 });
 RGB['#ffffff'] = { r: 255, g: 255, b: 255 };
 
-const toRgba = (hex, a) => {
-    const c = RGB[hex] || RGB['#ffffff'];
-    return `rgba(${c.r},${c.g},${c.b},${a})`;
-};
+const rgba = (hex, a) => { const c = RGB[hex] || RGB['#ffffff']; return `rgba(${c.r},${c.g},${c.b},${a})`; };
 
-const resizeCanvas = () => {
-    dpr = Math.min(window.devicePixelRatio || 1, isLowEnd ? 1 : 1.5);
+function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.5);
     canvasWidth = window.innerWidth;
     canvasHeight = window.innerHeight;
     canvas.width = canvasWidth * dpr;
@@ -413,31 +228,23 @@ const resizeCanvas = () => {
     canvas.style.width = canvasWidth + 'px';
     canvas.style.height = canvasHeight + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-};
+}
 
-// ==========================================
-// Sparkle Class
-// ==========================================
-
+// Sparkle
 class Sparkle {
-    constructor() {
-        this.reset();
-    }
-
+    constructor() { this.reset(); }
     reset() {
         this.x = random(0, canvasWidth);
         this.y = random(0, canvasHeight * 0.8);
-        this.size = random(0.5, 2);
-        this.alpha = random(0.2, 0.7);
+        this.size = random(0.5, 1.5);
+        this.alpha = random(0.2, 0.6);
         this.speed = random(0.01, 0.02);
         this.dir = Math.random() > 0.5 ? 1 : -1;
     }
-
     update() {
         this.alpha += this.speed * this.dir;
         if (this.alpha >= 0.8 || this.alpha <= 0.1) this.dir *= -1;
     }
-
     draw() {
         ctx.fillStyle = `rgba(255,255,255,${this.alpha})`;
         ctx.beginPath();
@@ -446,138 +253,83 @@ class Sparkle {
     }
 }
 
-// ==========================================
-// Trail Particle (for launch effect)
-// ==========================================
-
-class TrailParticle {
-    constructor(x, y, color) {
-        this.x = x;
-        this.y = y;
-        this.color = color;
-        this.alpha = 0.8;
-        this.size = random(1, 2.5);
-        this.decay = 0.04;
-    }
-
-    update() {
-        this.alpha -= this.decay;
-    }
-
-    draw() {
-        if (this.alpha <= 0) return;
-        ctx.fillStyle = toRgba(this.color, this.alpha);
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    isDead() {
-        return this.alpha <= 0;
-    }
-}
-
-// ==========================================
-// Firework Class (More festive!)
-// ==========================================
-
+// Firework
 class Firework {
-    constructor(startX, startY, targetX, targetY) {
-        this.x = startX;
-        this.y = startY;
-        this.targetY = targetY;
-        this.targetX = targetX;
-        this.color = getRandomColor();
-        this.secondaryColor = getRandomColor();
-
-        const angle = Math.atan2(targetY - startY, targetX - startX);
-        const speed = random(12, 16);
+    constructor(sx, sy, tx, ty) {
+        this.x = sx; this.y = sy;
+        this.tx = tx; this.ty = ty;
+        this.color = getColor();
+        this.color2 = getColor();
+        const angle = Math.atan2(ty - sy, tx - sx);
+        const speed = random(12, 15);
         this.vx = Math.cos(angle) * speed;
         this.vy = Math.sin(angle) * speed;
         this.exploded = false;
-        this.trailTimer = 0;
-
-        playLaunchSound();
+        this.trail = 0;
+        playLaunch();
     }
-
     update() {
-        // Leave trail particles
-        this.trailTimer++;
-        if (this.trailTimer % 2 === 0) {
-            particles.push(new TrailParticle(this.x, this.y, this.color));
-        }
-
+        this.trail++;
+        if (this.trail % 3 === 0) particles.push(new Trail(this.x, this.y, this.color));
         this.x += this.vx;
         this.y += this.vy;
         this.vy += CONFIG.gravity;
-
-        if (this.vy >= 0 || this.y <= this.targetY) {
-            this.explode();
-        }
+        if (this.vy >= 0 || this.y <= this.ty) this.explode();
     }
-
     draw() {
-        // Glow effect
-        ctx.save();
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = this.color;
         ctx.fillStyle = this.color;
         ctx.beginPath();
         ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
         ctx.fill();
-        ctx.restore();
     }
-
     explode() {
         this.exploded = true;
-        playExplosionSound();
-
-        const available = CONFIG.maxParticles - particles.length;
-        if (available <= 10) return;
-
-        const count = Math.min(CONFIG.particleCount, available);
-        const x = this.x;
-        const y = this.y;
-
-        // Main explosion ring
+        playBoom();
+        const avail = CONFIG.maxParticles - particles.length;
+        if (avail < 10) return;
+        const count = Math.min(CONFIG.particleCount, avail);
         for (let i = 0; i < count; i++) {
             const angle = (Math.PI * 2 / count) * i + random(-0.1, 0.1);
             const speed = random(2, 5);
-            const color = i % 3 === 0 ? this.secondaryColor : this.color;
-            particles.push(new Particle(x, y, Math.cos(angle) * speed, Math.sin(angle) * speed, color));
+            const color = i % 3 === 0 ? this.color2 : this.color;
+            particles.push(new Particle(this.x, this.y, Math.cos(angle) * speed, Math.sin(angle) * speed, color));
         }
-
-        // Inner burst
-        const innerCount = Math.floor(count * 0.4);
-        for (let i = 0; i < innerCount; i++) {
+        for (let i = 0; i < 8; i++) {
             const angle = random(0, Math.PI * 2);
-            const speed = random(0.5, 2.5);
-            particles.push(new Particle(x, y, Math.cos(angle) * speed, Math.sin(angle) * speed, '#ffffff'));
+            particles.push(new Particle(this.x, this.y, Math.cos(angle) * random(0.5, 2), Math.sin(angle) * random(0.5, 2), '#ffffff'));
         }
-
-        // Sparkle effects
-        setTimeout(() => playSparkleSound(), 50);
-        setTimeout(() => playSparkleSound(), 120);
     }
 }
 
-// ==========================================
-// Particle Class (Enhanced)
-// ==========================================
+// Trail
+class Trail {
+    constructor(x, y, color) {
+        this.x = x; this.y = y;
+        this.color = color;
+        this.alpha = 0.6;
+        this.size = random(1, 2);
+    }
+    update() { this.alpha -= 0.05; }
+    draw() {
+        if (this.alpha <= 0) return;
+        ctx.fillStyle = rgba(this.color, this.alpha);
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    isDead() { return this.alpha <= 0; }
+}
 
+// Particle
 class Particle {
     constructor(x, y, vx, vy, color) {
-        this.x = x;
-        this.y = y;
-        this.vx = vx;
-        this.vy = vy;
+        this.x = x; this.y = y;
+        this.vx = vx; this.vy = vy;
         this.color = color;
         this.alpha = 1;
         this.decay = random(CONFIG.particleDecay, CONFIG.particleDecay + 0.01);
-        this.size = random(1.5, 3.5);
-        this.sparkle = Math.random() > 0.7;
+        this.size = random(1.5, 3);
     }
-
     update() {
         this.x += this.vx;
         this.y += this.vy;
@@ -585,153 +337,84 @@ class Particle {
         this.vx *= CONFIG.friction;
         this.vy *= CONFIG.friction;
         this.alpha -= this.decay;
-
-        // Sparkle effect
-        if (this.sparkle && Math.random() > 0.9) {
-            this.alpha = Math.min(1, this.alpha + 0.1);
-        }
     }
-
     draw() {
         if (this.alpha <= 0.02) return;
-
-        const size = this.size * Math.max(0.3, this.alpha);
-
-        ctx.save();
-        if (this.sparkle) {
-            ctx.shadowBlur = 5;
-            ctx.shadowColor = this.color;
-        }
-        ctx.fillStyle = toRgba(this.color, this.alpha);
+        ctx.fillStyle = rgba(this.color, this.alpha);
         ctx.beginPath();
-        ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, this.size * this.alpha, 0, Math.PI * 2);
         ctx.fill();
-        ctx.restore();
     }
-
-    isDead() {
-        return this.alpha <= 0.02;
-    }
+    isDead() { return this.alpha <= 0.02; }
 }
 
-// ==========================================
-// Initialization
-// ==========================================
-
+// Init
 function init() {
-    resizeCanvas();
+    resize();
     createControls();
-
     sparkles = [];
-    for (let i = 0; i < CONFIG.sparkleCount; i++) {
-        sparkles.push(new Sparkle());
-    }
-
+    for (let i = 0; i < CONFIG.sparkleCount; i++) sparkles.push(new Sparkle());
     lastTime = performance.now();
     animate();
-
-    setInterval(autoLaunchFirework, CONFIG.autoFireworkInterval);
-
-    // Initial burst
-    setTimeout(() => {
-        launchRandomFirework();
-        setTimeout(() => launchRandomFirework(), 300);
-    }, 500);
+    setInterval(autoLaunch, CONFIG.autoFireworkInterval);
+    setTimeout(() => launch(random(canvasWidth * 0.2, canvasWidth * 0.8), canvasHeight * 0.3), 500);
 }
 
-// ==========================================
-// Launch Functions
-// ==========================================
-
-function launchFirework(targetX, targetY) {
-    if (fireworks.length >= CONFIG.maxFireworks) return;
-
-    const startX = random(canvasWidth * 0.15, canvasWidth * 0.85);
-    const startY = canvasHeight + 10;
-    fireworks.push(new Firework(startX, startY, targetX, targetY));
+function launch(tx, ty) {
+    if (fireworks.length >= CONFIG.maxFireworks) fireworks.shift();
+    fireworks.push(new Firework(random(canvasWidth * 0.2, canvasWidth * 0.8), canvasHeight + 10, tx, ty));
 }
 
-function launchRandomFirework() {
-    const targetX = random(canvasWidth * 0.1, canvasWidth * 0.9);
-    const targetY = random(canvasHeight * 0.1, canvasHeight * 0.4);
-    launchFirework(targetX, targetY);
-}
-
-function autoLaunchFirework() {
+function autoLaunch() {
     if (particles.length < CONFIG.maxParticles * 0.6) {
-        launchRandomFirework();
-        // Sometimes double launch for more festivity
-        if (Math.random() > 0.6) {
-            setTimeout(() => launchRandomFirework(), 200);
-        }
+        launch(random(canvasWidth * 0.1, canvasWidth * 0.9), random(canvasHeight * 0.1, canvasHeight * 0.4));
+        if (Math.random() > 0.6) setTimeout(() => launch(random(canvasWidth * 0.1, canvasWidth * 0.9), random(canvasHeight * 0.1, canvasHeight * 0.4)), 200);
     }
 }
 
-// ==========================================
-// Animation Loop
-// ==========================================
-
-function animate(currentTime = 0) {
+function animate(now = 0) {
     animationId = requestAnimationFrame(animate);
+    const dt = now - lastTime;
+    lastTime = now;
+    if (dt > 100) return;
 
-    const deltaTime = currentTime - lastTime;
-    lastTime = currentTime;
-
-    if (deltaTime > 100) return;
-
-    frameCount++;
-    if (isLowEnd && frameCount % 2 !== 0) return;
-
-    // Clear with theme color
     ctx.fillStyle = THEMES[currentTheme].bgColor;
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-    // Sparkles
-    for (let i = 0; i < sparkles.length; i++) {
-        sparkles[i].update();
-        sparkles[i].draw();
-    }
+    for (let s of sparkles) { s.update(); s.draw(); }
 
-    // Fireworks
     for (let i = fireworks.length - 1; i >= 0; i--) {
         fireworks[i].update();
         fireworks[i].draw();
-        if (fireworks[i].exploded) {
-            fireworks.splice(i, 1);
-        }
+        if (fireworks[i].exploded) fireworks.splice(i, 1);
     }
 
-    // Particles
     for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.update();
-        p.draw();
-        if (p.isDead()) {
+        particles[i].update();
+        particles[i].draw();
+        if (particles[i].isDead()) {
             particles[i] = particles[particles.length - 1];
             particles.pop();
         }
     }
 }
 
-// ==========================================
-// Interactivity - Each click = 1 firework!
-// ==========================================
+// Interaction - fixed for mobile
+let lastTap = 0;
 
-let lastClick = 0;
-const CLICK_THROTTLE = 80; // Faster response
-
-function handleClick(e) {
+function handleTap(e) {
     e.preventDefault();
-
-    // Initialize audio on first interaction
     if (!audioCtx) initAudio();
 
-    const now = performance.now();
-    if (now - lastClick < CLICK_THROTTLE) return;
-    lastClick = now;
+    const now = Date.now();
+    if (now - lastTap < 100) return;
+    lastTap = now;
 
     let x, y;
-    if (e.touches) {
+    if (e.changedTouches && e.changedTouches.length > 0) {
+        x = e.changedTouches[0].clientX;
+        y = e.changedTouches[0].clientY;
+    } else if (e.touches && e.touches.length > 0) {
         x = e.touches[0].clientX;
         y = e.touches[0].clientY;
     } else {
@@ -739,79 +422,24 @@ function handleClick(e) {
         y = e.clientY;
     }
 
-    // Each click = 1 firework, no limit check (just max queue)
-    const targetY = Math.min(y * 0.7, canvasHeight * 0.45);
-
-    // Force launch even if at max (replace oldest)
-    if (fireworks.length >= CONFIG.maxFireworks) {
-        fireworks.shift();
-    }
-
-    const startX = random(canvasWidth * 0.2, canvasWidth * 0.8);
-    fireworks.push(new Firework(startX, canvasHeight + 10, x, targetY));
+    const ty = Math.min(y * 0.7, canvasHeight * 0.45);
+    launch(x, ty);
 }
 
-// Swipe support for multi-firework
-let touchStart = { x: 0, y: 0, time: 0 };
+// Event listeners on body, not document
+document.body.addEventListener('click', handleTap);
+document.body.addEventListener('touchstart', (e) => { if (!audioCtx) initAudio(); }, { passive: true });
+document.body.addEventListener('touchend', handleTap, { passive: false });
 
-function handleTouchStart(e) {
-    if (!audioCtx) initAudio();
-    touchStart.x = e.touches[0].clientX;
-    touchStart.y = e.touches[0].clientY;
-    touchStart.time = performance.now();
-}
-
-function handleTouchEnd(e) {
-    const now = performance.now();
-    if (now - lastClick < CLICK_THROTTLE) return;
-
-    const touch = e.changedTouches[0];
-    const dx = touch.clientX - touchStart.x;
-    const dy = touch.clientY - touchStart.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const duration = now - touchStart.time;
-
-    if (dist > 60 && duration < 500) {
-        // Swipe = multiple fireworks
-        lastClick = now;
-        const steps = Math.min(4, Math.ceil(dist / 60));
-        for (let i = 0; i <= steps; i++) {
-            const px = touchStart.x + (dx / steps) * i;
-            const py = touchStart.y + (dy / steps) * i;
-            setTimeout(() => {
-                const targetY = Math.min(py * 0.65, canvasHeight * 0.4);
-                if (fireworks.length >= CONFIG.maxFireworks) fireworks.shift();
-                fireworks.push(new Firework(random(canvasWidth * 0.2, canvasWidth * 0.8), canvasHeight + 10, px, targetY));
-            }, i * 80);
-        }
-    } else {
-        // Normal tap
-        handleClick(e);
-    }
-}
-
-// Event listeners
-document.addEventListener('click', handleClick);
-document.addEventListener('touchstart', handleTouchStart, { passive: false });
-document.addEventListener('touchend', handleTouchEnd, { passive: false });
-
-// Resize
-let resizeTimeout;
+let resizeTimer;
 window.addEventListener('resize', () => {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-        resizeCanvas();
-        sparkles.forEach(s => s.reset());
-    }, 150);
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { resize(); sparkles.forEach(s => s.reset()); }, 150);
 });
 
-// ==========================================
-// Countdown Timer
-// ==========================================
-
+// Countdown
 const countdownEls = {};
-
-function cacheElements() {
+function cacheEls() {
     countdownEls.container = document.getElementById('countdownContainer');
     countdownEls.days = document.getElementById('days');
     countdownEls.hours = document.getElementById('hours');
@@ -820,69 +448,29 @@ function cacheElements() {
 }
 
 function updateCountdown() {
-    const target = new Date('January 1, 2026 00:00:00').getTime();
-    const diff = target - Date.now();
-
+    const diff = new Date('January 1, 2026 00:00:00').getTime() - Date.now();
     if (diff < 0) {
-        if (countdownEls.container) {
-            countdownEls.container.innerHTML = `
-                <h2 class="countdown-title" style="color: #ffb7c5;">
-                    🎆 Happy New Year 2026! 🎆
-                </h2>
-            `;
-        }
-        // BIG celebration!
-        for (let i = 0; i < 10; i++) {
-            setTimeout(() => launchRandomFirework(), i * 150);
-        }
+        if (countdownEls.container) countdownEls.container.innerHTML = '<h2 class="countdown-title">Happy New Year 2026!</h2>';
+        for (let i = 0; i < 8; i++) setTimeout(() => autoLaunch(), i * 150);
         return;
     }
-
     const d = (diff / 86400000) | 0;
     const h = ((diff % 86400000) / 3600000) | 0;
     const m = ((diff % 3600000) / 60000) | 0;
     const s = ((diff % 60000) / 1000) | 0;
-
     if (countdownEls.days) countdownEls.days.textContent = d < 10 ? '0' + d : d;
     if (countdownEls.hours) countdownEls.hours.textContent = h < 10 ? '0' + h : h;
     if (countdownEls.minutes) countdownEls.minutes.textContent = m < 10 ? '0' + m : m;
     if (countdownEls.seconds) countdownEls.seconds.textContent = s < 10 ? '0' + s : s;
 }
 
-// ==========================================
-// Visibility API
-// ==========================================
-
 document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        if (animationId) {
-            cancelAnimationFrame(animationId);
-            animationId = null;
-        }
-        particles = [];
-        fireworks = [];
-    } else {
-        if (!animationId) {
-            lastTime = performance.now();
-            animate();
-        }
-    }
+    if (document.hidden) { cancelAnimationFrame(animationId); animationId = null; particles = []; fireworks = []; }
+    else if (!animationId) { lastTime = performance.now(); animate(); }
 });
 
-// ==========================================
-// Initialize
-// ==========================================
-
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        cacheElements();
-        init();
-        updateCountdown();
-        setInterval(updateCountdown, 1000);
-    });
+    document.addEventListener('DOMContentLoaded', () => { cacheEls(); init(); updateCountdown(); setInterval(updateCountdown, 1000); });
 } else {
-    cacheElements();
-    init();
-    updateCountdown();
-    setInterval(updateCountdown, 1000);
+    cacheEls(); init(); updateCountdown(); setInterval(updateCountdown, 1000);
 }

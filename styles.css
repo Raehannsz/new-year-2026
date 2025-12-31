@@ -1,25 +1,18 @@
 /* ==========================================
    New Year 2026 - Minimalist Anime Theme
-   Clean, Soft, Elegant Japanese Aesthetic
    ========================================== */
 
-/* CSS Variables - Soft Anime Color Palette */
 :root {
     --sakura-pink: #ffb7c5;
     --soft-pink: #ffd1dc;
     --lavender: #e6e6fa;
     --soft-blue: #b4d7ff;
-    --sky-blue: #87ceeb;
-    --gold: #ffd700;
     --cream: #fffef0;
     --soft-white: #fefefe;
-    --dark-navy: #1a1a2e;
-    --deep-blue: #16213e;
     --glass-bg: rgba(255, 255, 255, 0.1);
     --glass-border: rgba(255, 255, 255, 0.2);
 }
 
-/* Reset & Base Styles */
 *,
 *::before,
 *::after {
@@ -35,48 +28,27 @@ html {
 body {
     min-height: 100vh;
     min-height: 100dvh;
-    font-family: 'Rajdhani', 'Noto Sans JP', sans-serif;
+    font-family: 'Rajdhani', sans-serif;
     color: var(--cream);
     overflow: hidden;
     position: relative;
-    cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-    /* Soft gradient night sky - anime style */
-    background: linear-gradient(180deg,
-            #0f0c29 0%,
-            #1a1a3e 25%,
-            #24243e 50%,
-            #302b63 75%,
-            #0f0c29 100%);
+    background: linear-gradient(180deg, #0f0c29 0%, #1a1a3e 25%, #24243e 50%, #302b63 75%, #0f0c29 100%);
 }
 
-/* GPU Acceleration */
-.main-content,
-.countdown-container,
-.title-container {
-    will-change: transform, opacity;
-    transform: translateZ(0);
-}
-
-/* ==========================================
-   Canvas - Full Screen
-   ========================================== */
-
+/* Canvas - MUST allow pointer events to pass through */
 #fireworksCanvas {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 10;
+    z-index: 1;
     pointer-events: none;
 }
 
-/* ==========================================
-   Soft Star Background
-   ========================================== */
-
+/* Stars background */
 body::after {
     content: '';
     position: fixed;
@@ -90,12 +62,10 @@ body::after {
         radial-gradient(1.5px 1.5px at 85% 55%, rgba(255, 255, 255, 0.6), transparent),
         radial-gradient(1px 1px at 15% 65%, rgba(255, 255, 255, 0.7), transparent),
         radial-gradient(1px 1px at 45% 75%, rgba(255, 255, 255, 0.5), transparent),
-        radial-gradient(2px 2px at 75% 85%, rgba(255, 255, 255, 0.6), transparent),
-        radial-gradient(1px 1px at 90% 15%, rgba(255, 255, 255, 0.8), transparent);
-    background-size: 100% 100%;
+        radial-gradient(2px 2px at 75% 85%, rgba(255, 255, 255, 0.6), transparent);
     animation: twinkle 5s ease-in-out infinite alternate;
-    z-index: 1;
-    opacity: 0.8;
+    z-index: 0;
+    pointer-events: none;
 }
 
 @keyframes twinkle {
@@ -108,13 +78,10 @@ body::after {
     }
 }
 
-/* ==========================================
-   Main Content Container
-   ========================================== */
-
+/* Main Content */
 .main-content {
     position: relative;
-    z-index: 20;
+    z-index: 5;
     min-height: 100vh;
     min-height: 100dvh;
     display: flex;
@@ -123,16 +90,15 @@ body::after {
     align-items: center;
     padding: 20px;
     gap: 30px;
+    pointer-events: none;
 }
 
-/* ==========================================
-   Countdown Section - Clean Minimal Style
-   ========================================== */
-
+/* Countdown */
 .countdown-container {
     text-align: center;
     animation: fadeDown 1s ease-out forwards;
     opacity: 0;
+    pointer-events: none;
 }
 
 @keyframes fadeDown {
@@ -177,7 +143,6 @@ body::after {
     border-radius: 16px;
     padding: 14px 18px;
     min-width: 65px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .countdown-value {
@@ -185,7 +150,6 @@ body::after {
     font-size: clamp(1.4rem, 4.5vw, 2.2rem);
     font-weight: 700;
     color: var(--soft-white);
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
     line-height: 1;
 }
 
@@ -201,7 +165,6 @@ body::after {
 .countdown-separator {
     font-family: 'Orbitron', sans-serif;
     font-size: clamp(1.2rem, 3.5vw, 1.6rem);
-    font-weight: 300;
     color: var(--sakura-pink);
     opacity: 0.7;
     animation: blink 1.5s ease-in-out infinite;
@@ -219,14 +182,12 @@ body::after {
     }
 }
 
-/* ==========================================
-   Main Title Section - Elegant Anime Style
-   ========================================== */
-
+/* Title */
 .title-container {
     text-align: center;
     animation: fadeUp 1.2s ease-out 0.2s forwards;
     opacity: 0;
+    pointer-events: none;
 }
 
 @keyframes fadeUp {
@@ -265,8 +226,7 @@ body::after {
     color: var(--soft-white);
     text-shadow:
         0 0 20px rgba(255, 183, 197, 0.5),
-        0 0 40px rgba(255, 183, 197, 0.3),
-        0 0 60px rgba(255, 183, 197, 0.2);
+        0 0 40px rgba(255, 183, 197, 0.3);
     letter-spacing: 8px;
     line-height: 1;
     animation: softGlow 3s ease-in-out infinite alternate;
@@ -274,20 +234,15 @@ body::after {
 
 @keyframes softGlow {
     0% {
-        text-shadow:
-            0 0 20px rgba(255, 183, 197, 0.5),
-            0 0 40px rgba(255, 183, 197, 0.3);
+        text-shadow: 0 0 20px rgba(255, 183, 197, 0.5), 0 0 40px rgba(255, 183, 197, 0.3);
     }
 
     100% {
-        text-shadow:
-            0 0 25px rgba(180, 215, 255, 0.5),
-            0 0 50px rgba(180, 215, 255, 0.3);
+        text-shadow: 0 0 25px rgba(180, 215, 255, 0.5), 0 0 50px rgba(180, 215, 255, 0.3);
     }
 }
 
 .subtitle {
-    font-family: 'Rajdhani', sans-serif;
     font-size: clamp(0.85rem, 2.5vw, 1.2rem);
     font-weight: 300;
     letter-spacing: 6px;
@@ -297,12 +252,8 @@ body::after {
     opacity: 0.8;
 }
 
-/* ==========================================
-   Tap Instruction - Minimal
-   ========================================== */
-
+/* Tap Instruction */
 .tap-instruction {
-    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -314,6 +265,7 @@ body::after {
     padding: 12px 24px;
     animation: fadeIn 1s ease-out 0.6s forwards, float 4s ease-in-out infinite;
     opacity: 0;
+    pointer-events: none;
 }
 
 @keyframes fadeIn {
@@ -338,14 +290,6 @@ body::after {
     }
 }
 
-.tap-ring {
-    display: none;
-}
-
-.tap-icon {
-    font-size: 1rem;
-}
-
 .tap-text {
     font-size: clamp(0.7rem, 1.8vw, 0.8rem);
     font-weight: 300;
@@ -353,55 +297,86 @@ body::after {
     color: rgba(255, 255, 255, 0.7);
 }
 
-/* ==========================================
-   Hide Cyberpunk Elements
-   ========================================== */
-
-.city-silhouette,
-.neon-grid,
-.light-trails,
-.light-trail,
-.corner-deco {
-    display: none !important;
+/* Control Buttons - MUST be clickable on mobile */
+.controls {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    z-index: 1000;
+    display: flex;
+    gap: 10px;
+    pointer-events: auto !important;
 }
 
-/* ==========================================
-   Sound Toggle Button
-   ========================================== */
-
-.sound-toggle {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 100;
-    background: var(--glass-bg);
+.control-btn {
+    background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 50%;
-    width: 45px;
-    height: 45px;
+    width: 48px;
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 1.2rem;
-    transition: transform 0.2s ease, background 0.2s ease;
+    font-size: 1rem;
+    font-weight: bold;
+    color: white;
+    transition: transform 0.2s, background 0.2s;
+    pointer-events: auto !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
-.sound-toggle:hover {
+.control-btn:hover {
     transform: scale(1.1);
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.25);
 }
 
-.sound-toggle:active {
+.control-btn:active {
     transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.3);
 }
 
-/* ==========================================
-   Responsive Design
-   ========================================== */
+/* Toast notification */
+.theme-toast {
+    position: fixed;
+    top: 75px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    padding: 10px 20px;
+    border-radius: 20px;
+    color: white;
+    font-size: 0.85rem;
+    z-index: 1001;
+    animation: toastAnim 2s ease forwards;
+    pointer-events: none;
+}
 
+@keyframes toastAnim {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    15% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    85% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Responsive */
 @media screen and (max-width: 360px) {
     .countdown-item {
         min-width: 50px;
@@ -410,6 +385,11 @@ body::after {
 
     .year-text {
         letter-spacing: 4px;
+    }
+
+    .control-btn {
+        width: 44px;
+        height: 44px;
     }
 }
 
