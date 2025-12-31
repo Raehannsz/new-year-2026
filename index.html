@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Selamat Tahun Baru 2026 - Cyberpunk Neon Anime Celebration">
+    <meta name="theme-color" content="#0a0a1a">
+    <title>🎆 Happy New Year 2026 - Cyberpunk Edition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body>
+    <!-- Background Canvas untuk Partikel dan Kembang Api -->
+    <canvas id="fireworksCanvas"></canvas>
+
+    <!-- Cyberpunk City Silhouette -->
+    <div class="city-silhouette"></div>
+
+    <!-- Neon Grid Floor -->
+    <div class="neon-grid"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Countdown Section -->
+        <section class="countdown-container" id="countdownContainer">
+            <h2 class="countdown-title">⏱ Countdown to 2026</h2>
+            <div class="countdown-wrapper">
+                <div class="countdown-item">
+                    <span class="countdown-value" id="days">00</span>
+                    <span class="countdown-label">Days</span>
+                </div>
+                <div class="countdown-separator">:</div>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="hours">00</span>
+                    <span class="countdown-label">Hours</span>
+                </div>
+                <div class="countdown-separator">:</div>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="minutes">00</span>
+                    <span class="countdown-label">Minutes</span>
+                </div>
+                <div class="countdown-separator">:</div>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="seconds">00</span>
+                    <span class="countdown-label">Seconds</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Title -->
+        <section class="title-container">
+            <h1 class="main-title">
+                <span class="title-line">Happy New Year</span>
+                <span class="year-text">2026</span>
+            </h1>
+            <p class="subtitle">✦ Welcome to the Future ✦</p>
+        </section>
+
+        <!-- Tap Instruction -->
+        <div class="tap-instruction">
+            <div class="tap-ring"></div>
+            <span class="tap-icon">👆</span>
+            <span class="tap-text">Tap untuk kembang api!</span>
+        </div>
+    </main>
+
+    <!-- Decorative Light Lines -->
+    <div class="light-trails">
+        <div class="light-trail trail-1"></div>
+        <div class="light-trail trail-2"></div>
+        <div class="light-trail trail-3"></div>
+    </div>
+
+    <!-- Corner Decorations -->
+    <div class="corner-deco top-left"></div>
+    <div class="corner-deco top-right"></div>
+    <div class="corner-deco bottom-left"></div>
+    <div class="corner-deco bottom-right"></div>
+
+    <script src="./script.js"></script>
+</body>
+
+</html>
